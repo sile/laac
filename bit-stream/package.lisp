@@ -1,4 +1,6 @@
 (defpackage laac.bit-stream
   (:use :common-lisp)
-  (:export read-bits))
+  (:export make
+           eos?
+           read-bits))
 (in-package :laac.bit-stream)
