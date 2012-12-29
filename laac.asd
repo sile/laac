@@ -8,4 +8,13 @@
   
   :serial t
   :components ((:file "package")
+
+               ;; bitstream
+               (:file "bit-stream/package")
+               (:file "bit-stream/bit-stream")
+
+               ;; adts
+               (:file "adts/package")
+               (:file "adts/adts")
+
                (:file "laac")))
