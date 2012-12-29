@@ -2,6 +2,15 @@
 
 (declaim (inline read-bits-impl))
 
+;; TODO: 汎用ユーティリティにした方が良さそう
+(defmacro with-oop-like ((var) &body body)
+  (let ((method (gensym))
+        (args   (gensym)))
+    `(macrolet ((,var (,method &rest ,args)
+                  (let ((fn (find-symbol (symbol-name ,method) :laac.bit-stream)))
+                    (cons fn (cons ',var ,args)))))
+       ,@body)))
+
 (defstruct bit-stream
   (source    t :type stream)
   (cur-byte  t :type (unsigned-byte 8))
@@ -50,3 +59,19 @@
                           (+ (ash acc read-bits)
                              (ldb (byte read-bits rest-bits) cur-byte))))))))
     (recur bit-count 0)))
+
+(defun drop-unaligned-bits (stream)
+  (declare (bit-stream stream))
+  (with-slots (rest-bits) stream
+    (setf rest-bits 0))
+  t)
+
+;; TODO: 使用するバッファも渡せるようにした方が効率的
+(defun read-bytes (stream size)
+  (declare (bit-stream stream)
+           (fixnum size))
+  (drop-unaligned-bits stream)
+  (with-slots (source) stream
+    (let* ((ary (make-array size :element-type '(unsigned-byte 8)))
+           (end-position (read-sequence ary source)))
+      (values ary end-position))))

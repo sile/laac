@@ -15,6 +15,7 @@
 
                ;; adts
                (:file "adts/package")
+               (:file "adts/syntax")
                (:file "adts/adts")
 
                (:file "laac")))
