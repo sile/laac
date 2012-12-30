@@ -49,10 +49,17 @@
      (error "TODO: not implemented: window-sequence=~a" :eight-short-sequence)
      )))
 
+(defstruct section-data
+  (sect-cb      t :type (vector (unsigned-byte 5)))
+  (sect-start   t :type (vector fixnum))
+  (sect-end     t :type (vector fixnum))
+  (sfb-cb       t :type (vector (unsigned-byte 5)))
+  (num-sec      t :type (vector fixnum)))
+
 (defstruct channel-stream
   (global-gain 0 :type (unsigned-byte 8))
   (ics-info nil :type (or null ics-info))
-  (section-data t ) ; TODO
+  (section-data t :type section-data) ; TODO
   (scale-factor-data t) ; TODO
   (pulse-data-present 0 :type (unsigned-byte 1))
   (pulse-data t ) ; TODO

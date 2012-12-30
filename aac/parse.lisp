@@ -6,6 +6,9 @@
 ;; XXX:
 (defparameter *audio-object-type* :undefined) ;; (member :lc :main :ssr :ltp :undefined)
 
+;; XXX: adtsの場合は、この値はどこで設定される？
+(defparameter *aac-section-data-resillience-flag* 0)
+
 ;; XXX: この値はどこで定義されている？
 (defconstant +PRED_SFB_MAX+ most-positive-fixnum)
 
@@ -47,17 +50,79 @@
                          :prediction-used prediction-used)
           )))))
 
-(defun parse-individual-channel-stream (in common-window scale-flag)
+(defun parse-section-data (in ics-info)
+  (declare (bit-stream:bit-stream in)
+           (ics-info ics-info))
+  (with-oop-like (in :bit-stream)
+    (let* ((eight-short-sequence? (eq (window-sequence-name (-> ics-info window-sequence))
+                                      :eight-short-sequence))
+           (sect-esc-val (if eight-short-sequence?
+                             (1- (ash 1 3))
+                           (1- (ash 1 5))))
+           (num-window-groups (get-num-window-groups ics-info))
+           (sect-cb-list '())
+           (sect-start-list '())
+           (sect-end-list '())
+           (sfb-cb-list '())
+           (num-sec-list '()))
+      
+      (dotimes (g num-window-groups)
+        (loop WITH k = 0
+              FOR i fixnum FROM 0
+              WHILE (< k (-> ics-info max-sfb))
+          DO
+          (let ((sect-cb (if (= *aac-section-data-resillience-flag* 1)
+                             (in read-bits 5)
+                           (in read-bits 4)))
+                (sect-len 0))
+            
+            (if (or (= 0 *aac-section-data-resillience-flag*)
+                    (< sect-cb 11)
+                    (< 11 sect-cb 16))
+                (loop FOR sect-len-incr = (if eight-short-sequence? 
+                                              (in read-bits 3)
+                                            (in read-bits 5))
+                      DO (incf sect-len sect-len-incr)
+                      WHILE (= sect-len-incr sect-esc-val))
+              (incf sect-len))
+
+            (push sect-cb sect-cb-list)
+            (push k sect-start-list)
+            (push (+ k sect-len) sect-end-list)
+            
+            (loop FOR sfb FROM k BELOW (+ k sect-len)
+                  DO (push sect-cb sfb-cb-list))
+            
+            (incf k sect-len)
+            )
+          FINALLY
+          (push i num-sec-list)))
+          
+      (make-section-data :sect-cb (coerce (nreverse sect-cb-list) '(vector (unsigned-byte 5)))
+                         :sfb-cb  (coerce (nreverse sfb-cb-list) '(vector (unsigned-byte 5)))
+                         :sect-start (coerce (nreverse sect-start-list) '(vector fixnum))
+                         :sect-end   (coerce (nreverse sect-end-list) '(vector fixnum))
+                         :num-sec    (coerce (nreverse num-sec-list) '(vector fixnum))
+                         )
+      )))
+
+(defun parse-individual-channel-stream (in common-window scale-flag common-ics-info)
   (declare (bit-stream:bit-stream in)
            ((unsigned-byte 1) common-window scale-flag))
   (with-oop-like (in :bit-stream)
     (let ((global-gain (in read-bits 8))
-          (ics-info nil))
+          (ics-info nil)
+          (section-data nil)
+          (scale-factor-data nil))
       (when (and (= common-window 0) (= scale-flag 0))
         (setf ics-info (parse-ics-info in common-window)))
       
+      (setf section-data (parse-section-data in (or ics-info common-ics-info)))
+      
       (make-channel-stream :global-gain global-gain
                            :ics-info ics-info
+                           :section-data section-data
+                           :scale-factor-data scale-factor-data
         )
       )))
 
@@ -92,8 +157,8 @@
        :ics-info             ics-info
        :ms-mask-present      ms-mask-present
        :ms-used              ms-used
-       :channel-stream1 (parse-individual-channel-stream in common-window 0)
-       :channel-stream2 (parse-individual-channel-stream in common-window 0)
+       :channel-stream1 (parse-individual-channel-stream in common-window 0 ics-info)
+       :channel-stream2 (parse-individual-channel-stream in common-window 0 ics-info)
        ))))
 
 (defun parse-coupling-channel-element (in)
