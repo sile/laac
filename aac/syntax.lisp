@@ -56,11 +56,21 @@
   (sfb-cb       t :type (vector (unsigned-byte 5)))
   (num-sec      t :type (vector fixnum)))
 
+(defstruct scale-factor-data
+  (hcod-sf nil :type (or null (vector (unsigned-byte 19))))
+  (rvlc-cod-sf nil :type (or null (vector (unsigned-byte 9))))
+  (sf-escapes-present 0 :type (unsigned-byte 1))
+  (length-of-rvlc-escapes 0 :type (unsigned-byte 8))
+  (rvlc-esc-sf nil :type (or null (vector (unsigned-byte 20))))
+  (dpcm-noise-last-position 0 :type (unsigned-byte 9))
+  )
+
+;; TODO: ics?
 (defstruct channel-stream
   (global-gain 0 :type (unsigned-byte 8))
   (ics-info nil :type (or null ics-info))
-  (section-data t :type section-data) ; TODO
-  (scale-factor-data t) ; TODO
+  (section-data t :type section-data) 
+  (scale-factor-data t :type scale-factor-data)
   (pulse-data-present 0 :type (unsigned-byte 1))
   (pulse-data t ) ; TODO
   (tns-data-present 0 :type (unsigned-byte 1))
@@ -73,6 +83,7 @@
   (reordered-spectral-data t ) ; TODO
   )
 
+;; TODO: cpe?
 (defstruct channel-pair-element 
   (element-instance-tag 0 :type (unsigned-byte 4))
   (common-window        0 :type (unsigned-byte 1))
@@ -84,6 +95,6 @@
   ;; present if ms-mask-present == 1
   (ms-used            nil :type (or null (simple-array (unsigned-byte 1) (* *))))
   
-  (channel-stream1 t :type channel-stream)
-  (channel-stream2 t :type channel-stream)
+  (channel-stream1 t :type channel-stream) ;; TODO: rename left
+  (channel-stream2 t :type channel-stream) ;; TODO: rename right
   )
