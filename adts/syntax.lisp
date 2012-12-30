@@ -26,13 +26,6 @@
   (variable-header t :type variable-header)
   (raw-data-block  t :type (simple-array (unsigned-byte 8))))
 
-;; TODO: 汎用ユーティリティパッケージに移動する
-(defmacro -> (object slot &rest slots)
-  `(with-slots (,slot) ,object
-     ,(if (endp slots)
-          slot
-        `(-> ,slot ,@slots))))
-
 (defun id-name (adts)
   (case (-> adts fixed-header id)
     (0 :mpeg-4)

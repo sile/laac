@@ -7,3 +7,9 @@
                   (let ((fn (find-symbol (symbol-name ,method) ,package)))
                     (cons fn (cons ',var ,args)))))
        ,@body)))
+
+(defmacro -> (object slot &rest slots)
+  `(with-slots (,slot) ,object
+     ,(if (endp slots)
+          slot
+        `(-> ,slot ,@slots))))
