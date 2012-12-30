@@ -2,15 +2,6 @@
 
 (declaim (inline read-bits-impl))
 
-;; TODO: 汎用ユーティリティにした方が良さそう
-(defmacro with-oop-like ((var) &body body)
-  (let ((method (gensym))
-        (args   (gensym)))
-    `(macrolet ((,var (,method &rest ,args)
-                  (let ((fn (find-symbol (symbol-name ,method) :laac.bit-stream)))
-                    (cons fn (cons ',var ,args)))))
-       ,@body)))
-
 (defstruct bit-stream
   (source    t :type stream)
   (cur-byte  t :type (unsigned-byte 8))
@@ -20,6 +11,10 @@
   (make-bit-stream :source source-stream
                    :cur-byte 0
                    :rest-bits 0))
+
+(defun make-from-bytes (bytes)
+  (declare ((vector (unsigned-byte 8)) bytes))
+  (make (flexi-streams:make-in-memory-input-stream bytes)))
 
 (defun eos? (stream)
   (declare (bit-stream stream))

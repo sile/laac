@@ -1,5 +1,5 @@
 (defpackage laac.adts
-  (:use :common-lisp)
+  (:use :common-lisp :laac.util)
   (:export adts
            fixed-header
            variable-header

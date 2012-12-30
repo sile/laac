@@ -5,7 +5,7 @@
 
 (defun parse-fixed-header (in)
   (declare (bit-stream:bit-stream in))
-  (bit-stream:with-oop-like (in)
+  (with-oop-like (in :bit-stream)
     (let ((syncword (in read-bits 12)))
       (assert (= #xFFF syncword) () "syncword must be #xFFF: value=~d" syncword)
     
@@ -24,7 +24,7 @@
 
 (defun parse-variable-header (in)
   (declare (bit-stream:bit-stream in))
-  (bit-stream:with-oop-like (in)
+  (with-oop-like (in :bit-stream)
     (make-variable-header
      :copyright-identification-bit       (in read-bits 1)
      :copyright-identification-start     (in read-bits 1)
