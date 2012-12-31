@@ -65,6 +65,13 @@
   (dpcm-noise-last-position 0 :type (unsigned-byte 9))
   )
 
+(defstruct gain-control-data
+  (max-band 0 :type (unsigned-byte 2))
+  (alevcode 0 :type (vector (unsigned-byte 4)))
+  (aloccode 0 :type (vector (unsigned-byte 5)))
+  (adjust-num 0 :type (vector (unsigned-byte 3)))
+  )
+
 ;; TODO: ics?
 (defstruct channel-stream
   (global-gain 0 :type (unsigned-byte 8))
@@ -76,7 +83,7 @@
   (tns-data-present 0 :type (unsigned-byte 1))
   (tns-data t ) ; TODO
   (gain-control-data-present 0 :type (unsigned-byte 1))
-  (gain-control-data t ) ; TODO
+  (gain-control-data nil :type (or null gain-control-data))
   (spectral-data t ) ; TODO
   (length-of-reordered-spectral-data 0 :type (unsigned-byte 14))
   (length-of-longest-codeword 0 :type (unsigned-byte 6))

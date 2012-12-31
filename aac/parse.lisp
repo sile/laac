@@ -150,6 +150,62 @@
                               :length-of-rvlc-escapes length-of-rvlc-escapes
                               :dpcm-noise-last-position dpcm-noise-last-position))))
 
+(defun parse-gain-control-data (in ics-info)
+  (declare (bit-stream:bit-stream in)
+           (ics-info ics-info))
+  (with-oop-like (in :bit-stream)
+    (let ((max-band (in read-bits 2))
+          (adjust-num-list '())
+          (alevcode-list '())
+          (aloccode-list '()))
+      
+      (labels ((do-common (wd-count body-fn)
+                 (loop REPEAT wd-count DO 
+                   (push 0 adjust-num-list)
+                   (push 0 alevcode-list)
+                   (push 0 aloccode-list))
+               
+                 (loop FOR bd FROM 1 TO max-band DO
+                   (loop FOR wd FROM 0 BELOW wd-count DO
+                     (push (in read-bits 3) adjust-num-list)
+                     (loop FOR ad BELOW (car adjust-num-list) DO
+                       (funcall body-fn bd wd ad)))))
+
+               (do-only-long-sequence ()
+                 (do-common 1 (lambda (bd wd ad)
+                                (declare (ignore bd wd ad))
+                                (push (in read-bits 4) alevcode-list)
+                                (push (in read-bits 5) aloccode-list))))
+               (do-long-start-sequence ()
+                 (do-common 2 (lambda (bd wd ad)
+                                (declare (ignore bd ad))
+                                (push (in read-bits 4) alevcode-list)
+                                (if (= wd 0)
+                                    (push (in read-bits 4) aloccode-list)
+                                  (push (in read-bits 2) aloccode-list)))))
+               (do-eight-short-sequence ()
+                 (do-common 8 (lambda (bd wd ad)
+                                (declare (ignore bd wd ad))
+                                (push (in read-bits 4) alevcode-list)
+                                (push (in read-bits 2) aloccode-list))))
+               (do-long-stop-sequence ()
+                 (do-common 2 (lambda (bd wd ad)
+                                (declare (ignore bd ad))
+                                (push (in read-bits 4) alevcode-list)
+                                (if (= wd 0)
+                                    (push (in read-bits 4) aloccode-list)
+                                  (push (in read-bits 5) aloccode-list))))))
+        (case (window-sequence-name (-> ics-info window-sequence))
+          (:only-long-sequence (do-only-long-sequence))
+          (:long-start-sequence (do-long-start-sequence))
+          (:eight-short-sequence (do-eight-short-sequence))
+          (:long-stop-sequence (do-long-stop-sequence))))
+  
+      (make-gain-control-data :max-band max-band
+                              :adjust-num (coerce (nreverse adjust-num-list) '(vector (unsigned-byte 3)))
+                              :alevcode   (coerce (nreverse alevcode-list) '(vector (unsigned-byte 4)))
+                              :aloccode   (coerce (nreverse aloccode-list) '(vector (unsigned-byte 5)))))))
+
 (defun parse-individual-channel-stream (in common-window scale-flag common-ics-info)
   (declare (bit-stream:bit-stream in)
            ((unsigned-byte 1) common-window scale-flag))
@@ -157,18 +213,40 @@
     (let ((global-gain (in read-bits 8))
           (ics-info nil)
           (section-data nil)
-          (scale-factor-data nil))
+          (scale-factor-data nil)
+          (pulse-data-present 0)
+          (tns-data-present 0)
+          (gain-control-data-present 0)
+          (gain-control-data nil))
       (when (and (= common-window 0) (= scale-flag 0))
         (setf ics-info (parse-ics-info in common-window)))
       
       (setf section-data (parse-section-data in (or ics-info common-ics-info))
             scale-factor-data (parse-scale-factor-data in (or ics-info common-ics-info)))
       
+      (when (= 0 scale-flag)
+        (setf pulse-data-present (in read-bits 1))
+        (when (= 1 pulse-data-present)
+          (error "TODO: not implemented: pulse-data"))
+
+        (setf tns-data-present (in read-bits 1))
+        (when (= 1 tns-data-present)
+          (error "TODO: not implemented: tns-data"))
+
+        (setf gain-control-data-present (in read-bits 1))
+        (when (= 1 gain-control-data-present)
+          (setf gain-control-data (parse-gain-control-data in (or ics-info common-ics-info))))
+        )
+
       (make-channel-stream :global-gain global-gain
                            :ics-info ics-info
                            :section-data section-data
                            :scale-factor-data scale-factor-data
-        )
+                           :pulse-data-present pulse-data-present
+                           :tns-data-present tns-data-present
+                           :gain-control-data-present gain-control-data-present
+                           :gain-control-data gain-control-data
+                           )
       )))
 
 
