@@ -287,7 +287,6 @@
   (declare (bit-stream:bit-stream in))
   (prog1
       (loop WITH *audio-object-type* = profile
-            REPEAT 1 ;; XXX: for develop
             FOR id-syn-ele = (syntactic-element-name (bit-stream:read-bits in 3))
             UNTIL (eq id-syn-ele :end)
         COLLECT

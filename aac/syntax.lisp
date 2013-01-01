@@ -50,13 +50,20 @@
   (prediction-used nil :type (or null (vector (unsigned-byte 1))))
   )
 
+;; 4.5.2.3.4 Scalefactor bands and grouping
 (defun get-num-window-groups (ics-info)
   (declare (ics-info ics-info))
-  (case (window-sequence-name (-> ics-info window-sequence))
+  (ecase (window-sequence-name (-> ics-info window-sequence))
     ((:only-long-sequence :long-start-sequence :long-stop-sequence)
      1)
     ((:eight-short-sequence)
-     (error "TODO: not implemented: window-sequence=~a" :eight-short-sequence)
+	 (let ((num-window-groups 1)
+		   (num-windows 8))
+	   (loop FOR i FROM 0 BELOW (1- num-windows) 
+			 WHEN (ldb-test (byte 1 i) (-> ics-info scale-factor-grouping))
+			 DO (incf num-window-groups))
+	   num-window-groups
+	   )
      )))
 
 (defstruct section-data

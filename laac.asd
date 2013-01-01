@@ -13,6 +13,10 @@
                ;; util
                (:file "util/package")
                (:file "util/util")
+
+			   ;; huffman
+			   (:file "huffman/package")
+			   (:file "huffman/huffman")
                    
                ;; bitstream
                (:file "bit-stream/package")
