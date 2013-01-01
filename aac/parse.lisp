@@ -107,44 +107,27 @@
                          )
       )))
 
-(defun parse-scale-factor-data (in ics-info)
+(defun parse-scale-factor-data (in section-data ics-info)
   (declare (bit-stream:bit-stream in)
+		   (ignore in)
+		   (section-data section-data)
            (ics-info ics-info))
   (with-oop-like (in :bit-stream)
-    (let (#|(intensity-used 0)|#
-          (noise-used 0)
-          (sf-escapes-present 0)
+    (let ((sf-escapes-present 0)
           (length-of-rvlc-escapes 0)
-          (dpcm-noise-last-position 0))
-      (if (= 0 *aac-section-data-resillience-flag*)
-          (loop #|TODO: WITH noise-pcm-flag = 1 |#
-                FOR g FROM 0 BELOW (get-num-window-groups ics-info)
-            DO
-            (dotimes (sfb (-> ics-info max-sfb))
-              (error "TODO: not implemented(1)")))
-        (error "TODO: not implemented(2)"))
-      
-      #+C
-      (when (= 1 intensity-used)
-        (error "TODO: not implemented(3)"))
-
-      (setf noise-used 0
-            sf-escapes-present (in read-bits 1))
-
-      (when (= 1 sf-escapes-present)
-        (setf length-of-rvlc-escapes (in read-bits 8))
-        (dotimes (g (get-num-window-groups ics-info))
-          (dotimes (sfb (-> ics-info max-sfb))
-            (error "TODO: not implemented(4)"))))
-      
-      #+C
-      (when (and intensity-used
-                 t #|TODO: (eq dpcm-is-last-position :esc-flag)|#)
-        (error "TODO: not implemented(5)"))
-
-      #+C
-      (when noise-used
-        (setf dpcm-noise-last-position (in read-bits 9)))
+          (dpcm-noise-last-position 0)
+		  (sfb-cb (-> section-data sfb-cb)))
+	  
+	  (assert (= 0 *aac-scale-factor-data-resilience-flag*) ()
+			  "Unsupported: aacScaleFactorDataResilienceFlag == 1")
+	  
+	  (loop ;;WITH noise-pcm-flag = 1
+			WITH num-window-groups = (get-num-window-groups ics-info)
+			FOR g FROM 0 BELOW num-window-groups
+	    DO
+		(dotimes (sfb (-> ics-info max-sfb))
+		  (when (/= +ZERO_HCB+ (aref sfb-cb (+ (* g num-window-groups) sfb)))
+			(error "TODO: not implemented(1)"))))
 
       (make-scale-factor-data :sf-escapes-present sf-escapes-present
                               :length-of-rvlc-escapes length-of-rvlc-escapes
@@ -221,8 +204,8 @@
       (when (and (= common-window 0) (= scale-flag 0))
         (setf ics-info (parse-ics-info in common-window)))
       
-      (setf section-data (parse-section-data in (or ics-info common-ics-info))
-            scale-factor-data (parse-scale-factor-data in (or ics-info common-ics-info)))
+      (setf section-data (parse-section-data in (or ics-info common-ics-info)))
+	  (setf scale-factor-data (parse-scale-factor-data in section-data (or ics-info common-ics-info)))
       
       (when (= 0 scale-flag)
         (setf pulse-data-present (in read-bits 1))

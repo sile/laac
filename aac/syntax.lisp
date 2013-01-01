@@ -1,5 +1,15 @@
 (in-package :laac.aac)
 
+(defconstant +ZERO_HCB+ 0)
+(defconstant +FIRST_PAIR_HCB+ 5)
+(defconstant +ESC_HCB+ 11)
+(defconstant +QUAD_LEN+ 4)
+(defconstant +PAIR_LEN+ 2)
+(defconstant +NOISE_HCB+ 13)
+(defconstant +INTENSITY_HCB2+ 14)
+(defconstant +INTENSITY_HCB+ 15)
+(defconstant +ESC_FLAG+ 16)
+
 (defun syntactic-element-name (id)
   (declare ((integer 0 7) id))
   (case id
