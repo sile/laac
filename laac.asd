@@ -14,14 +14,15 @@
                (:file "util/package")
                (:file "util/util")
 
-			   ;; huffman
-			   (:file "huffman/package")
-			   (:file "huffman/huffman")
-                   
                ;; bitstream
                (:file "bit-stream/package")
                (:file "bit-stream/bit-stream")
 
+			   ;; huffman
+			   (:file "huffman/package")
+			   (:file "huffman/table")
+			   (:file "huffman/huffman")
+                   
                ;; adts
                (:file "adts/package")
                (:file "adts/syntax")

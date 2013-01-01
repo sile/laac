@@ -1,4 +1,5 @@
 (defpackage laac.huffman
   (:use :common-lisp)
-  (:export ))
+  (:export *hcb-sf*
+		   decode-scale-factor))
 (in-package :laac.huffman)
