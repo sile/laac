@@ -60,7 +60,7 @@
 	 (let ((num-window-groups 1)
 		   (num-windows 8))
 	   (loop FOR i FROM 0 BELOW (1- num-windows) 
-			 WHEN (ldb-test (byte 1 i) (-> ics-info scale-factor-grouping))
+			 UNLESS (ldb-test (byte 1 i) (-> ics-info scale-factor-grouping))
 			 DO (incf num-window-groups))
 	   num-window-groups
 	   )

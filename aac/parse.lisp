@@ -121,7 +121,9 @@
 	  
 	  (assert (= 0 *aac-scale-factor-data-resilience-flag*) ()
 			  "Unsupported: aacScaleFactorDataResilienceFlag == 1")
-	  
+
+	  (print `(:xxx ,(get-num-window-groups ics-info) ,(-> ics-info max-sfb)))
+
 	  (loop WITH noise-pcm-flag = 1
 			WITH num-window-groups = (get-num-window-groups ics-info)
 			FOR g FROM 0 BELOW num-window-groups
