@@ -1,6 +1,7 @@
 (in-package :laac.aac)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
+  (rename-package :laac.huffman :laac.huffman '(:huffman))
   (rename-package :laac.bit-stream :laac.bit-stream '(:bit-stream)))
 
 ;; XXX:
@@ -109,29 +110,44 @@
 
 (defun parse-scale-factor-data (in section-data ics-info)
   (declare (bit-stream:bit-stream in)
-		   (ignore in)
 		   (section-data section-data)
            (ics-info ics-info))
   (with-oop-like (in :bit-stream)
-    (let ((sf-escapes-present 0)
-          (length-of-rvlc-escapes 0)
-          (dpcm-noise-last-position 0)
-		  (sfb-cb (-> section-data sfb-cb)))
+    (let ((sfb-cb (-> section-data sfb-cb))
+		  (dpcm-is-position #1=(make-array `(,(get-num-window-groups ics-info) ,(-> ics-info max-sfb)) 
+									  :initial-element 0 :element-type 'fixnum))
+		  (dpcm-noise-nrg #1#)
+		  (dpcm-sf #1#))
 	  
 	  (assert (= 0 *aac-scale-factor-data-resilience-flag*) ()
 			  "Unsupported: aacScaleFactorDataResilienceFlag == 1")
 	  
-	  (loop ;;WITH noise-pcm-flag = 1
+	  (loop WITH noise-pcm-flag = 1
 			WITH num-window-groups = (get-num-window-groups ics-info)
 			FOR g FROM 0 BELOW num-window-groups
 	    DO
-		(dotimes (sfb (-> ics-info max-sfb))
-		  (when (/= +ZERO_HCB+ (aref sfb-cb (+ (* g num-window-groups) sfb)))
-			(error "TODO: not implemented(1)"))))
-
-      (make-scale-factor-data :sf-escapes-present sf-escapes-present
-                              :length-of-rvlc-escapes length-of-rvlc-escapes
-                              :dpcm-noise-last-position dpcm-noise-last-position))))
+		(loop FOR sfb-index FROM 0 BELOW (-> ics-info max-sfb)
+			  FOR sfb = (aref sfb-cb (+ (* g num-window-groups) sfb-index))
+		  DO
+		  (print `(:sfb ,sfb-index ,sfb))
+		  (case sfb
+		    ((#.+ZERO_HCB+))
+			((#.+INTENSITY_HCB+ #.+INTENSITY_HCB2+) ; is_intensity(g, sfb-index) == true
+			 (setf (aref dpcm-is-position g sfb-index) (huffman:decode-scale-factor in)))
+			((#.+NOISE_HCB+) ; is_notice(g, sfb-index) == true
+			 (if (= noise-pcm-flag 1)
+				 (setf (aref dpcm-noise-nrg g sfb-index) (in read-bits 9)
+					   noise-pcm-flag 0)
+			   (setf (aref dpcm-noise-nrg g sfb-index) (huffman:decode-scale-factor in))))
+			(otherwise
+			 (setf (aref dpcm-sf g sfb-index) (huffman:decode-scale-factor in)))
+			)))
+	  (print `(:dpcm-is-position ,dpcm-is-position))
+	  (print `(:dpcm-noise-nrg ,dpcm-noise-nrg))
+	  (print `(:dpcm-sf ,dpcm-sf))
+      (make-scale-factor-data :dpcm-is-position dpcm-is-position
+							  :dpcm-noise-nrg dpcm-noise-nrg
+							  :dpcm-sf dpcm-sf))))
 
 (defun parse-gain-control-data (in ics-info)
   (declare (bit-stream:bit-stream in)
@@ -302,4 +318,5 @@
     (bit-stream:drop-unaligned-bits in)))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
+  (rename-package :laac.huffman :laac.huffman '())
   (rename-package :laac.bit-stream :laac.bit-stream '()))

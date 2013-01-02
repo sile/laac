@@ -74,13 +74,9 @@
   (num-sec      t :type (vector fixnum)))
 
 (defstruct scale-factor-data
-  (hcod-sf nil :type (or null (vector (unsigned-byte 19))))
-  (rvlc-cod-sf nil :type (or null (vector (unsigned-byte 9))))
-  (sf-escapes-present 0 :type (unsigned-byte 1))
-  (length-of-rvlc-escapes 0 :type (unsigned-byte 8))
-  (rvlc-esc-sf nil :type (or null (vector (unsigned-byte 20))))
-  (dpcm-noise-last-position 0 :type (unsigned-byte 9))
-  )
+  (dpcm-is-position t :type (array fixnum (* *)))
+  (dpcm-noise-nrg t :type (array fixnum (* *)))
+  (dpcm-sf t :type (array fixnum (* *))))
 
 (defstruct gain-control-data
   (max-band 0 :type (unsigned-byte 2))

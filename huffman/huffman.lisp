@@ -5,17 +5,17 @@
 
 (defun find-offset (in table)
   (declare (bit-stream:bit-stream in)
-		   ((array fixnum (* *)) table))
-  (loop WITH len = (aref table 0 +LENGTH_POS+)
-		WITH cw = (bit-stream:read-bits in len)
-		FOR off fixnum FROM 1
-		WHILE (/= cw (aref table off +CODEWORD_POS+))
+		   ((array t #|fixnum|# (* *)) table))
+  (loop WITH len = 0
+		WITH cw = 0
+		FOR off fixnum FROM 0
     DO
 	(let ((j (- (aref table off +LENGTH_POS+) len)))
+	  (incf len j)
 	  (setf cw (+ (ash cw j) 
-				  (bit-stream:read-bits in j))))
-	FINALLY
-	(return off)))
+				  (bit-stream:read-bits in j)))
+	  (when (= cw (aref table off +CODEWORD_POS+))
+		(return off)))))
 
 (defun decode-scale-factor (in)
   (declare (bit-stream:bit-stream in))
