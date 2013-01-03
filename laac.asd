@@ -30,6 +30,7 @@
 
                ;; aac
                (:file "aac/package")
+			   (:file "aac/table")
                (:file "aac/syntax")
                (:file "aac/parse")
                (:file "aac/aac")

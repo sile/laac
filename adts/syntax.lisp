@@ -26,6 +26,9 @@
   (variable-header t :type variable-header)
   (raw-data-block  t :type (simple-array (unsigned-byte 8))))
 
+(defun sampling-frequency-index (adts)
+  (-> adts fixed-header sampling-frequency-index))
+
 (defun id-name (adts)
   (case (-> adts fixed-header id)
     (0 :mpeg-4)

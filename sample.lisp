@@ -4,7 +4,10 @@
       (laac.adts:each-frame (adts payload) in
         (let ((pin (laac.bit-stream:make-from-bytes payload)))
           (print 
-            (list (laac.aac:parse-raw-data-block pin :profile (laac.adts:profile-name adts))
+            (list (laac.aac:parse-raw-data-block 
+				   pin 
+				   :profile (laac.adts:profile-name adts)
+				   :sampling-frequency-index (laac.adts::sampling-frequency-index adts))
 				  pin
 				  (laac.bit-stream:eos? pin)))
 		  (unless (plusp (decf limit))

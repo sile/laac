@@ -70,3 +70,6 @@
     (let* ((ary (make-array size :element-type '(unsigned-byte 8)))
            (end-position (read-sequence ary source)))
       (values ary end-position))))
+
+(defun read-bool (stream)
+  (= (read-bits stream 1) 1))
