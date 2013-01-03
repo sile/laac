@@ -18,10 +18,10 @@
                (:file "bit-stream/package")
                (:file "bit-stream/bit-stream")
 
-			   ;; huffman
-			   (:file "huffman/package")
-			   (:file "huffman/table")
-			   (:file "huffman/huffman")
+               ;; huffman
+               (:file "huffman/package")
+               (:file "huffman/table")
+               (:file "huffman/huffman")
                    
                ;; adts
                (:file "adts/package")
@@ -30,9 +30,10 @@
 
                ;; aac
                (:file "aac/package")
-			   (:file "aac/table")
+               (:file "aac/table")
                (:file "aac/syntax")
                (:file "aac/parse")
+               (:file "aac/decode")
                (:file "aac/aac")
 
                (:file "laac")))
