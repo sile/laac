@@ -27,7 +27,6 @@
                        (get-codebook codebook-number)
     (let* ((offset (find-offset in codebook))
            (index (aref codebook offset +INDEX_POS+)))
-      (print `(:cb ,codebook-number :offset ,offset))
       (multiple-value-bind (w x y z) (get-wxyz unsigned? dimention lav index)
         (when unsigned?
           (when (= dimention 4)

@@ -121,9 +121,7 @@
                   (dpcm-sf #1#))
           
           (assert (= 0 *aac-scale-factor-data-resilience-flag*) ()
-                          "Unsupported: aacScaleFactorDataResilienceFlag == 1")
-
-          (print `(:xxx ,(get-num-window-groups ics-info) ,(-> ics-info max-sfb)))
+                  "Unsupported: aacScaleFactorDataResilienceFlag == 1")
 
           (loop WITH noise-pcm-flag = 1
                         WITH num-window-groups = (get-num-window-groups ics-info)
@@ -132,7 +130,6 @@
                 (loop FOR sfb-index FROM 0 BELOW (-> ics-info max-sfb)
                           FOR sfb = (aref sfb-cb (+ (* g num-window-groups) sfb-index))
                   DO
-                  (print `(:sfb ,sfb-index ,sfb))
                   (case sfb
                     ((#.+ZERO_HCB+))
                         ((#.+INTENSITY_HCB+ #.+INTENSITY_HCB2+) ; is_intensity(g, sfb-index) == true
@@ -145,9 +142,6 @@
                         (otherwise
                          (setf (aref dpcm-sf g sfb-index) (huffman:decode-scale-factor in)))
                         )))
-          (print `(:dpcm-is-position ,dpcm-is-position))
-          (print `(:dpcm-noise-nrg ,dpcm-noise-nrg))
-          (print `(:dpcm-sf ,dpcm-sf))
       (make-scale-factor-data :dpcm-is-position dpcm-is-position
                               :dpcm-noise-nrg dpcm-noise-nrg
                               :dpcm-sf dpcm-sf))))
@@ -225,11 +219,6 @@
   (let ((sect-sfb-offset (get-sect-sfb-offset ics-info))
         (acc '())
         (total-i -1))
-    (print (list (-> section-data num-sec)
-                 (-> section-data sect-cb)
-                 (-> section-data sect-start)
-                 (-> section-data sect-end)))
-    (print sect-sfb-offset)
     (dotimes (g (get-num-window-groups ics-info))
       (dotimes (i (aref (-> section-data num-sec) g))
         (incf total-i)
@@ -241,8 +230,6 @@
                   FOR k FROM (aref sect-sfb-offset g start-index) BELOW (aref sect-sfb-offset g end-index) 
                       BY (if (< sect-cb +FIRST_PAIR_HCB+) +QUAD_LEN+ +PAIR_LEN+)
               DO
-              ;; (print `(:start ,(aref sect-sfb-offset g start-index) :end ,(aref sect-sfb-offset g end-index)
-              ;;  :cur ,k))
               (multiple-value-bind (w x y z) (huffman:decode-spectral-data in sect-cb)
                 (when (= sect-cb +ESC_HCB+)
                   (when (= (abs y) +ESC_FLAG+)
@@ -253,7 +240,6 @@
                 (push `(:g ,g :i ,i :w ,w :x ,x :y ,y :z ,z) acc)
                 )
               )))))
-    (print `(:acc ,(reverse acc)))
     (make-spectral-data :data (nreverse acc))))
 
 (defun parse-individual-channel-stream (in common-window scale-flag common-ics-info)
@@ -269,7 +255,6 @@
           (gain-control-data-present 0)
           (gain-control-data nil)
                   (spectral-data nil))
-          (print `(:global-gain ,global-gain))
       (when (and (= common-window 0) (= scale-flag 0))
         (setf ics-info (parse-ics-info in common-window)))
       
@@ -303,6 +288,7 @@
                            :tns-data-present tns-data-present
                            :gain-control-data-present gain-control-data-present
                            :gain-control-data gain-control-data
+                           :spectral-data spectral-data
                            )
       )))
 

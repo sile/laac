@@ -97,8 +97,6 @@
          (window-group-length (get-window-group-length ics-info))
          (num-window-groups (get-num-window-groups ics-info))
          (sect-sfb-offset (make-array `(,num-window-groups ,(1+ (-> ics-info max-sfb))) :element-type 'fixnum)))
-    (print `(:grouplen ,window-group-length :sampling-frequency ,*sampling-frequency-index*
-                       :short ,swb-offset-short-window))
     (ecase (window-sequence-name (-> ics-info window-sequence))
       ((:only-long-sequence :long-start-sequence :long-stop-sequence)
        (loop FOR i FROM 0 TO (-> ics-info max-sfb) 
