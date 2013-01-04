@@ -18,7 +18,7 @@
     (#xb  8000)
     (#xc  7350)
     ((#xd #xe) (error "reserved sample frequency index: ~a" index))
-    ((#xf)     (error "escale value: ~a" index)))) ; XXX: どのようなケースでこの値が使用されるか？
+    ((#xf)     (error "escale value (not permitted): ~a" index))))
 
 ;; 4.5.4 Tables
 (defparameter *swb-offset-long-96*
