@@ -111,21 +111,21 @@
 
 (defun parse-scale-factor-data (in section-data ics-info)
   (declare (bit-stream:bit-stream in)
-                   (section-data section-data)
+           (section-data section-data)
            (ics-info ics-info))
   (with-oop-like (in :bit-stream)
     (let ((sfb-cb (-> section-data sfb-cb))
-                  (dpcm-is-position #1=(make-array `(,(get-num-window-groups ics-info) ,(-> ics-info max-sfb)) 
-                                                                          :initial-element 0 :element-type 'fixnum))
-                  (dpcm-noise-nrg #1#)
-                  (dpcm-sf #1#))
-          
-          (assert (= 0 *aac-scale-factor-data-resilience-flag*) ()
-                  "Unsupported: aacScaleFactorDataResilienceFlag == 1")
-
-          (loop WITH noise-pcm-flag = 1
-                WITH num-window-groups = (get-num-window-groups ics-info)
-                FOR g FROM 0 BELOW num-window-groups
+          (dpcm-is-position #1=(make-array `(,(get-num-window-groups ics-info) ,(-> ics-info max-sfb)) 
+                                           :initial-element 0 :element-type 'fixnum))
+          (dpcm-noise-nrg #1#)
+          (dpcm-sf #1#))
+      
+      (assert (= 0 *aac-scale-factor-data-resilience-flag*) ()
+              "Unsupported: aacScaleFactorDataResilienceFlag == 1")
+      
+      (loop WITH noise-pcm-flag = 1
+            WITH num-window-groups = (get-num-window-groups ics-info)
+            FOR g FROM 0 BELOW num-window-groups
             DO
             (loop FOR sfb-index FROM 0 BELOW (-> ics-info max-sfb)
                   FOR sfb = (aref sfb-cb (+ (* g num-window-groups) sfb-index))
@@ -142,9 +142,9 @@
                     (otherwise
                      (setf (aref dpcm-sf g sfb-index) (huffman:decode-scale-factor in)))
                     )))
-          (make-scale-factor-data :dpcm-is-position dpcm-is-position
-                                  :dpcm-noise-nrg dpcm-noise-nrg
-                                  :dpcm-sf dpcm-sf))))
+      (make-scale-factor-data :dpcm-is-position dpcm-is-position
+                              :dpcm-noise-nrg dpcm-noise-nrg
+                              :dpcm-sf dpcm-sf))))
 
 (defun parse-gain-control-data (in ics-info)
   (declare (bit-stream:bit-stream in)
