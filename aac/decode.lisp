@@ -195,5 +195,20 @@
     ;; IS
     (setf invquant-data2 (process-is cpe invquant-data1 invquant-data2))
 
+    ;; LTP
+    ;; NOTE: AAC-LC don't support LTP
+
+    ;; dependent coupling (before TNS)
+    ;; NOTE: 現状、cce未対応なので関係なし
+
+    ;; TNS
+    (assert (= 0 (-> ics1 tns-data-present)) () "Unsupported TNS(1)")
+    (assert (= 0 (-> ics2 tns-data-present)) () "Unsupported TNS(2)")    
+
+    ;; dependent coupling (after TNS)
+    ;; NOTE: 現状、cce未対応なので関係なし
+    
+    ;; filterbank
+    
     (values invquant-data1
             invquant-data2)))
