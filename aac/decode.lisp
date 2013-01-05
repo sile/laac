@@ -123,17 +123,77 @@
     (values (nreverse new-l-spec)
             (nreverse new-r-spec))))
 
+(defun intensity-sign (cb)
+  (case cb
+    (#.+INTENSITY_HCB+ 1)
+    (#.+INTENSITY_HCB2+ -1)
+    (otherwise 0)))
+
+(defun invert-intensity (cpe g sfb)
+  (if (and (= (-> cpe ms-mask-present) 1)
+           #+C (not (eq *audio-object-type* :aac-scalable))
+           )
+      (- 1 (* 2 (aref (-> cpe ms-used) g sfb)))
+    1))
+
+;; 4.6.8.2 Intensity Stereo (IS)
+(defun process-is (cpe l-spec r-spec)
+  (declare (channel-pair-element cpe))
+  (let* ((ics-info (-> cpe ics-info))
+         (max-sfb (-> ics-info max-sfb))
+         (ics (-> cpe channel-stream2)) ; right XXX: どれを使うのが正しい？
+         (sfb-cb (-> ics section-data sfb-cb))
+         (dpcm-is-position (-> ics scale-factor-data dpcm-is-position))
+         (window-group-length (get-window-group-length ics-info))
+         (swb-offset (get-swb-offset ics-info))
+         (p 0)
+         (new-r-spec '()))
+    (loop FOR g FROM 0 BELOW (get-num-window-groups ics-info) 
+          FOR is-position = (make-array max-sfb :element-type 'fixnum :initial-element 0) DO
+      ;; decode intensity positions for this group
+      (loop FOR sfb FROM 0 BELOW max-sfb
+            FOR cb = (aref sfb-cb (+ (* g max-sfb) sfb))
+            WHEN (is-intensity cb)
+            DO (setf (aref is-position sfb) (incf p (aref dpcm-is-position g sfb))))
+      
+      ;; do intensity stereo decoding
+      (loop FOR sfb FROM 0 BELOW max-sfb
+            FOR cb = (aref sfb-cb (+ (* g max-sfb) sfb))
+            FOR apply? = (is-intensity cb)
+            FOR scale = (and apply?
+                             (* (intensity-sign cb)
+                                (invert-intensity cpe g sfb)
+                                (expt 0.5 (* 0.25 (aref is-position sfb)))))
+        DO
+        (loop WITH width = (- (aref swb-offset (1+ sfb)) (aref swb-offset sfb))
+              FOR win FROM 0 BELOW (aref window-group-length g) DO
+          (loop FOR bin FROM 0 BELOW width 
+                FOR l = (pop l-spec)
+                FOR r = (pop r-spec)
+            DO
+            (if (not apply?)
+                (push r new-r-spec)
+              (push (* scale l) new-r-spec))))))
+    (nreverse new-r-spec)))
+
 (defun decode-cpe (cpe)
   (declare (channel-pair-element cpe))
   (let* ((ics1 (-> cpe channel-stream1))
          (ics2 (-> cpe channel-stream2))
          (invquant-data1 (apply-scalefactor ics1 (inverse-quantize-ics ics1)))
          (invquant-data2 (apply-scalefactor ics2 (inverse-quantize-ics ics2))))
-    
+
+    ;; M/S
     (when (and (= 1 (-> cpe common-window))
                (> (-> cpe ms-mask-present) 0))
       (setf (values invquant-data1 invquant-data2)
             (process-m/s cpe invquant-data1 invquant-data2)))
-    
+
+    ;; main prediction
+    (assert (eq *audio-object-type* :lc) () "Unsupported audio-object-type: ~a" *audio-object-type*)
+
+    ;; IS
+    (setf invquant-data2 (process-is cpe invquant-data1 invquant-data2))
+
     (values invquant-data1
             invquant-data2)))
