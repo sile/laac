@@ -116,6 +116,25 @@
                (setf (aref sect-sfb-offset g sect-sfb) offset)))))
     sect-sfb-offset))
 
+;; 4.5.2.3.4 Scalefactor bands and grouping
+(defun get-swb-offset (ics-info)
+  (declare (ics-info ics-info))
+  (let* ((swb-offset-long-window (get-swb-offset-long-window *sampling-frequency-index*))
+         (swb-offset-short-window (get-swb-offset-short-window *sampling-frequency-index*)))
+    (ecase (window-sequence-name (-> ics-info window-sequence))
+      ((:only-long-sequence :long-start-sequence :long-stop-sequence)
+       (let ((swb-offset (make-array (1+ (-> ics-info max-sfb)) :element-type 'fixnum)))
+         (dotimes (i (length swb-offset))
+           (setf (aref swb-offset i) (aref swb-offset-long-window i)))
+         swb-offset))
+      ((:eight-short-sequence)
+       (let* ((num-swb+1 (length swb-offset-short-window))
+              (swb-offset (make-array num-swb+1 :element-type 'fixnum)))
+         (dotimes (i (length swb-offset))
+           (setf (aref swb-offset i) (aref swb-offset-short-window i)))
+         swb-offset))
+       )))
+         
 (defstruct section-data
   (sect-cb      t :type (vector (unsigned-byte 5)))
   (sect-start   t :type (vector fixnum))

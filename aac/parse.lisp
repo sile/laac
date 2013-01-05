@@ -124,27 +124,27 @@
                   "Unsupported: aacScaleFactorDataResilienceFlag == 1")
 
           (loop WITH noise-pcm-flag = 1
-                        WITH num-window-groups = (get-num-window-groups ics-info)
-                        FOR g FROM 0 BELOW num-window-groups
+                WITH num-window-groups = (get-num-window-groups ics-info)
+                FOR g FROM 0 BELOW num-window-groups
             DO
-                (loop FOR sfb-index FROM 0 BELOW (-> ics-info max-sfb)
-                          FOR sfb = (aref sfb-cb (+ (* g num-window-groups) sfb-index))
+            (loop FOR sfb-index FROM 0 BELOW (-> ics-info max-sfb)
+                  FOR sfb = (aref sfb-cb (+ (* g num-window-groups) sfb-index))
                   DO
                   (case sfb
                     ((#.+ZERO_HCB+))
-                        ((#.+INTENSITY_HCB+ #.+INTENSITY_HCB2+) ; is_intensity(g, sfb-index) == true
-                         (setf (aref dpcm-is-position g sfb-index) (huffman:decode-scale-factor in)))
-                        ((#.+NOISE_HCB+) ; is_notice(g, sfb-index) == true
-                         (if (= noise-pcm-flag 1)
-                                 (setf (aref dpcm-noise-nrg g sfb-index) (in read-bits 9)
-                                           noise-pcm-flag 0)
-                           (setf (aref dpcm-noise-nrg g sfb-index) (huffman:decode-scale-factor in))))
-                        (otherwise
-                         (setf (aref dpcm-sf g sfb-index) (huffman:decode-scale-factor in)))
-                        )))
-      (make-scale-factor-data :dpcm-is-position dpcm-is-position
-                              :dpcm-noise-nrg dpcm-noise-nrg
-                              :dpcm-sf dpcm-sf))))
+                    ((#.+INTENSITY_HCB+ #.+INTENSITY_HCB2+) ; is_intensity(g, sfb-index) == true
+                     (setf (aref dpcm-is-position g sfb-index) (huffman:decode-scale-factor in)))
+                    ((#.+NOISE_HCB+) ; is_notice(g, sfb-index) == true
+                     (if (= noise-pcm-flag 1)
+                         (setf (aref dpcm-noise-nrg g sfb-index) (in read-bits 9)
+                               noise-pcm-flag 0)
+                       (setf (aref dpcm-noise-nrg g sfb-index) (huffman:decode-scale-factor in))))
+                    (otherwise
+                     (setf (aref dpcm-sf g sfb-index) (huffman:decode-scale-factor in)))
+                    )))
+          (make-scale-factor-data :dpcm-is-position dpcm-is-position
+                                  :dpcm-noise-nrg dpcm-noise-nrg
+                                  :dpcm-sf dpcm-sf))))
 
 (defun parse-gain-control-data (in ics-info)
   (declare (bit-stream:bit-stream in)
@@ -222,7 +222,7 @@
     (dotimes (g (get-num-window-groups ics-info))
       (dotimes (i (aref (-> section-data num-sec) g))
         (incf total-i)
-        (let* ((g-i total-i)
+        (let* ((g-i total-i) ; XXX:
                (sect-cb (aref (-> section-data sect-cb) g-i)))
           (when (/= sect-cb +ZERO_HCB+ +NOISE_HCB+ +INTENSITY_HCB+ +INTENSITY_HCB2+)
             (loop WITH start-index = (aref (-> section-data sect-start) g-i)
@@ -237,7 +237,11 @@
                   (when (= (abs z) +ESC_FLAG+)
                     (setf z (get-escape in (minusp z))))
                   )
-                (push `(:g ,g :i ,i :w ,w :x ,x :y ,y :z ,z) acc)
+                ;;(push `(:g ,g :i ,i :w ,w :x ,x :y ,y :z ,z) acc)
+                (loop FOR e IN (if (< sect-cb +FIRST_PAIR_HCB+)
+                                   (list w x y z)
+                                 (list y z))
+                      DO (push e acc))
                 )
               )))))
     (make-spectral-data :data (nreverse acc))))
@@ -247,14 +251,14 @@
            ((unsigned-byte 1) common-window scale-flag))
   (with-oop-like (in :bit-stream)
     (let ((global-gain (in read-bits 8))
-          (ics-info nil)
+          (ics-info common-ics-info) ;;nil)
           (section-data nil)
           (scale-factor-data nil)
           (pulse-data-present 0)
           (tns-data-present 0)
           (gain-control-data-present 0)
           (gain-control-data nil)
-                  (spectral-data nil))
+          (spectral-data nil))
       (when (and (= common-window 0) (= scale-flag 0))
         (setf ics-info (parse-ics-info in common-window)))
       
@@ -346,8 +350,8 @@
 (defun parse-raw-data-block (in &key (profile :undefined) (sampling-frequency-index))
   (declare (bit-stream:bit-stream in))
   (prog1
-      (loop WITH *audio-object-type* = profile
-                        WITH *sampling-frequency-index* = sampling-frequency-index
+      (loop WITH *audio-object-type* = (setf *audio-object-type* profile) ; XXX:
+            WITH *sampling-frequency-index* = (setf *sampling-frequency-index* sampling-frequency-index) ; XXX:
             FOR id-syn-ele = (syntactic-element-name (bit-stream:read-bits in 3))
             UNTIL (eq id-syn-ele :end)
         COLLECT
