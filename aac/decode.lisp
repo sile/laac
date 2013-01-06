@@ -176,6 +176,22 @@
               (push (* scale l) new-r-spec))))))
     (nreverse new-r-spec)))
 
+;; group->sfb->window から group->window->sfb の順に並び替える
+(defun sort-data (ics data)
+  (let* ((ics-info (-> ics ics-info))
+         (window-group-length (get-window-group-length ics-info))
+         (swb-offset (get-swb-offset ics-info))
+         (new-data '()))
+    (loop FOR g FROM 0 BELOW (get-num-window-groups ics-info) DO
+      (loop FOR sfb FROM 0 BELOW (-> ics-info max-sfb) DO
+        (loop WITH width = (- (aref swb-offset (1+ sfb)) (aref swb-offset sfb))
+              FOR win FROM 0 BELOW (aref window-group-length g) DO
+          (loop FOR bin FROM 0 BELOW width 
+                FOR key = (+ (* g 10000000) (* win 100000) (* sfb 1000) bin) ; XXX:
+            DO
+            (push `(,key ,(pop data)) new-data)))))
+    (mapcar #'second (sort (nreverse new-data) #'< :key #'first))))
+
 (defun decode-cpe (cpe &optional (filterbanks (list (make-filterbank) (make-filterbank))))
   (declare (channel-pair-element cpe)
            (ignore filterbanks))
@@ -209,6 +225,10 @@
     ;; dependent coupling (after TNS)
     ;; NOTE: 現状、cce未対応なので関係なし
     
+    ;; XXX: 
+    (setf invquant-data1 (sort-data ics1 invquant-data1))
+    (setf invquant-data2 (sort-data ics2 invquant-data2))
+
     ;; filterbank
     #+C
     (process-filterbank (first filterbanks) 
