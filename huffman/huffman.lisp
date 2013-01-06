@@ -34,7 +34,6 @@
             (and (/= 0 x) (bit-stream:read-bool in) (setf x (- x))))
           (and (/= 0 y) (bit-stream:read-bool in) (setf y (- y)))
           (and (/= 0 z) (bit-stream:read-bool in) (setf z (- z))))
-        
         (values w x y z)))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)

@@ -176,8 +176,9 @@
               (push (* scale l) new-r-spec))))))
     (nreverse new-r-spec)))
 
-(defun decode-cpe (cpe)
-  (declare (channel-pair-element cpe))
+(defun decode-cpe (cpe &optional (filterbanks (list (make-filterbank) (make-filterbank))))
+  (declare (channel-pair-element cpe)
+           (ignore filterbanks))
   (let* ((ics1 (-> cpe channel-stream1))
          (ics2 (-> cpe channel-stream2))
          (invquant-data1 (apply-scalefactor ics1 (inverse-quantize-ics ics1)))
@@ -209,6 +210,16 @@
     ;; NOTE: 現状、cce未対応なので関係なし
     
     ;; filterbank
+    #+C
+    (process-filterbank (first filterbanks) 
+                        (window-sequence-name (-> ics1 window-sequence)) 
+                        (-> ics1 window-shape)
+                        invquant-data1)
+    #+C
+    (process-filterbank (second filterbanks) 
+                        (window-sequence-name (-> ics2 window-sequence)) 
+                        (-> ics2 window-shape)
+                        invquant-data2)
     
     (values invquant-data1
             invquant-data2)))
