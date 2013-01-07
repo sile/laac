@@ -176,7 +176,7 @@
               (push (* scale l) new-r-spec))))))
     (nreverse new-r-spec)))
 
-;; group->sfb->window から group->window->sfb の順に並び替える
+;; group->sfb->window-group->window から group->window-group->sfb->window の順に並び替える
 (defun sort-data (ics data)
   (let* ((ics-info (-> ics ics-info))
          (window-group-length (get-window-group-length ics-info))
@@ -193,8 +193,7 @@
     (mapcar #'second (sort (nreverse new-data) #'< :key #'first))))
 
 (defun decode-cpe (cpe &optional (filterbanks (list (make-filterbank) (make-filterbank))))
-  (declare (channel-pair-element cpe)
-           (ignore filterbanks))
+  (declare (channel-pair-element cpe))
   (let* ((ics1 (-> cpe channel-stream1))
          (ics2 (-> cpe channel-stream2))
          (invquant-data1 (apply-scalefactor ics1 (inverse-quantize-ics ics1)))
@@ -230,15 +229,14 @@
     (setf invquant-data2 (sort-data ics2 invquant-data2))
 
     ;; filterbank
-    #+C
     (process-filterbank (first filterbanks) 
-                        (window-sequence-name (-> ics1 window-sequence)) 
-                        (-> ics1 window-shape)
+                        (window-sequence-name (-> ics1 ics-info window-sequence)) 
+                        (-> ics1 ics-info window-shape)
                         invquant-data1)
-    #+C
+
     (process-filterbank (second filterbanks) 
-                        (window-sequence-name (-> ics2 window-sequence)) 
-                        (-> ics2 window-shape)
+                        (window-sequence-name (-> ics2 ics-info window-sequence)) 
+                        (-> ics2 ics-info window-shape)
                         invquant-data2)
     
     (values invquant-data1

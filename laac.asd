@@ -33,6 +33,7 @@
                (:file "aac/table")
                (:file "aac/syntax")
                (:file "aac/parse")
+               (:file "aac/mdct")
                (:file "aac/filterbank")
                (:file "aac/decode")
                (:file "aac/aac")

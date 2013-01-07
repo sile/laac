@@ -39,3 +39,11 @@
                          :sampling-frequency-index (laac.adts::sampling-frequency-index adts)))
             (return (values)))
           )))))
+
+(defun test4 (aac-path &optional (limit 1))
+  (test3 (lambda (list)
+           (let ((cpe (car list)))
+             (print (laac.aac::decode-cpe cpe))
+             ))
+         aac-path
+         limit))
