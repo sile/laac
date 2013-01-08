@@ -19,5 +19,10 @@
                          (1920 *mdct-table-1920*)
                          (240  *mdct-table-240*))
                )))
-    
-    
+
+(defun process-mdct (mdct data buf buf-offset)
+  (declare (mdct mdct))
+
+  ;; pre-IFFT complex multiplication 
+  (list mdct data buf buf-offset))
+

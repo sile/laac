@@ -3,6 +3,6 @@
 (defstruct fft
   )
 
-(defun fft (length)
+(defun new-fft (length)
   (declare (ignore length))
   (make-fft))

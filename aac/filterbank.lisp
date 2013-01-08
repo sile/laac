@@ -16,11 +16,13 @@
 
 (defun process-filterbank (filterbank window-sequence-name window-shape data)
   (declare (filterbank filterbank))
-  (ecase window-sequence-name
-    (:only-long-sequence (error "unsupported: ~a" window-sequence-name))
-    (:long-start-sequence 
-     )
-    (:eight-short-sequence (error "unsupported: ~a" window-sequence-name))
-    (:long-stop-sequence (error "unsupported: ~a" window-sequence-name)))
-  (list filterbank window-sequence-name window-shape data)
-  )
+  (let ((buf (make-array (* +WINDOW_LEN_LONG+ 2) :initial-element 0)))
+    (ecase window-sequence-name
+      (:only-long-sequence (error "unsupported: ~a" window-sequence-name))
+      (:long-start-sequence 
+       (process-mdct (-> filterbank mdct-long) data buf 0)
+       )
+      (:eight-short-sequence (error "unsupported: ~a" window-sequence-name))
+      (:long-stop-sequence (error "unsupported: ~a" window-sequence-name)))
+    (list filterbank window-sequence-name window-shape data)
+    ))
