@@ -20,9 +20,25 @@
                          (240  *mdct-table-240*))
                )))
 
-(defun process-mdct (mdct data buf buf-offset)
+(defun process-mdct (mdct data out out-offset)
   (declare (mdct mdct))
+  (let* ((sincos (-> mdct sincos))
+         (N (-> mdct length))
+         (N2 (ash N -1))
+         (N4 (ash N -2))
+         (N8 (ash N -4))
+         (buf (make-array `(,N4 2) :initial-element 0)))
 
-  ;; pre-IFFT complex multiplication 
-  (list mdct data buf buf-offset))
+    ;; pre-IFFT complex multiplication 
+    (loop FOR k FROM 0 BELOW N4
+          FOR in1 = (or (nth (* 2 k)          data) 0) ; XXX
+          FOR in2 = (or (nth (- N2 1 (* 2 k)) data) 0) ; XXX
+      DO
+      (setf (aref buf k 1) (+ (* in1 (aref sincos k 0)) (* in2 (aref sincos k 1)))
+            (aref buf k 0) (- (* in2 (aref sincos k 0)) (* in1 (aref sincos k 1)))))
+                              
+    (print buf)
+  )
+  (print `(:data ,(length data)))
+  (list mdct data out out-offset))
 
