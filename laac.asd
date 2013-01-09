@@ -33,6 +33,7 @@
                (:file "aac/table")
                (:file "aac/syntax")
                (:file "aac/parse")
+               (:file "aac/fft-table")
                (:file "aac/fft") ; XXX: move to util
                (:file "aac/mdct-table")
                (:file "aac/mdct")

@@ -36,7 +36,10 @@
       DO
       (setf (aref buf k 1) (+ (* in1 (aref sincos k 0)) (* in2 (aref sincos k 1)))
             (aref buf k 0) (- (* in2 (aref sincos k 0)) (* in1 (aref sincos k 1)))))
-                              
+    
+    ;; complex IFFT, non-scaling
+    (process-fft (-> mdct fft) buf nil)
+    
     (print buf)
   )
   (print `(:data ,(length data)))
