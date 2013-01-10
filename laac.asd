@@ -37,6 +37,8 @@
                (:file "aac/fft") ; XXX: move to util
                (:file "aac/mdct-table")
                (:file "aac/mdct")
+			   (:file "aac/sine-windows")
+			   (:file "aac/kbd-windows")
                (:file "aac/filterbank")
                (:file "aac/decode")
                (:file "aac/aac")
