@@ -20,7 +20,7 @@
                          (240  *mdct-table-240*))
                )))
 
-(defun process-mdct (mdct data out out-offset)
+(defun process-mdct (mdct data out out-off)
   (declare (mdct mdct))
   (let* ((sincos (-> mdct sincos))
          (N (-> mdct length))
@@ -40,8 +40,45 @@
     ;; complex IFFT, non-scaling
     (process-fft (-> mdct fft) buf nil)
     
+    ;; post-IFFT complex multiplication
+    (loop FOR k FROM 0 BELOW N4 
+          FOR tmp0 = (aref buf k 0)
+          FOR tmp1 = (aref buf k 1)
+      DO
+      (setf (aref buf k 1) (+ (* tmp1 (aref sincos k 0)) (* tmp0 (aref sincos k 1)))
+            (aref buf k 0) (- (* tmp0 (aref sincos k 0)) (* tmp1 (aref sincos k 1)))))
+    
+    ;; reordering
+    (loop FOR k FROM 0 BELOW N8 BY 2
+          FOR 2k = (* k 2)
+      DO
+      (setf (aref out (+ out-off 0 2k)) (aref buf (+ N8 0 k) 1)
+            (aref out (+ out-off 2 2k)) (aref buf (+ N8 1 k) 1)
+
+            (aref out (+ out-off 1 2k)) (- (aref buf (- N8 1 k) 0))
+            (aref out (+ out-off 3 2k)) (- (aref buf (- N8 2 k) 0))
+
+            (aref out (+ out-off N4 0 2k)) (aref buf (+ 0 k) 0)
+            (aref out (+ out-off N4 2 2k)) (aref buf (+ 1 k) 0)
+            
+            (aref out (+ out-off N4 1 2k)) (- (aref buf (- N4 1 k) 1))
+            (aref out (+ out-off N4 3 2k)) (- (aref buf (- N4 2 k) 1))
+            
+            (aref out (+ out-off N2 0 2k)) (aref buf (+ N8 0 k) 0)
+            (aref out (+ out-off N2 2 2k)) (aref buf (+ N8 1 k) 0)
+            
+            (aref out (+ out-off N2 1 2k)) (- (aref buf (- N8 1 k) 1))
+            (aref out (+ out-off N2 3 2k)) (- (aref buf (- N8 2 k) 1))
+            
+            (aref out (+ out-off N2 N4 0 2k)) (- (aref buf (+ 0 k) 1))
+            (aref out (+ out-off N2 N4 2 2k)) (- (aref buf (+ 1 k) 1))
+            
+            (aref out (+ out-off N2 N4 1 2k)) (aref buf (- N4 1 k) 0)
+            (aref out (+ out-off N2 N4 3 2k)) (aref buf (- N4 2 k) 0)))
+    
     (print buf)
-  )
+    )
   (print `(:data ,(length data)))
-  (list mdct data out out-offset))
+  (values))
+
 
