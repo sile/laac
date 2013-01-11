@@ -36,9 +36,16 @@
       DO
       (setf (aref buf k 1) (+ (* in1 (aref sincos k 0)) (* in2 (aref sincos k 1)))
             (aref buf k 0) (- (* in2 (aref sincos k 0)) (* in1 (aref sincos k 1)))))
-    
+
+    #+C
+    (print (cons :pre-ifft
+                 (loop FOR i FROM 0 BELOW N4 COLLECT (list (aref buf i 0) (aref buf i 1)))))
+
     ;; complex IFFT, non-scaling
     (process-fft (-> mdct fft) buf nil)
+
+    (print (cons :fft
+                 (loop FOR i FROM 0 BELOW N4 COLLECT (list (aref buf i 0) (aref buf i 1)))))
     
     ;; post-IFFT complex multiplication
     (loop FOR k FROM 0 BELOW N4 
