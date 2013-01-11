@@ -32,11 +32,11 @@
     (let ((in (laac.bit-stream:make in)))
       (laac.adts:each-frame (adts payload) in
         (let ((pin (laac.bit-stream:make-from-bytes payload)))
+          (funcall fn (laac.aac:parse-raw-data-block 
+                       pin 
+                       :profile (laac.adts:profile-name adts)
+                       :sampling-frequency-index (laac.adts::sampling-frequency-index adts)))
           (unless (plusp (decf limit))
-            (funcall fn (laac.aac:parse-raw-data-block 
-                         pin 
-                         :profile (laac.adts:profile-name adts)
-                         :sampling-frequency-index (laac.adts::sampling-frequency-index adts)))
             (return (values)))
           )))))
 

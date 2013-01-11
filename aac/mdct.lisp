@@ -75,8 +75,5 @@
             
             (aref out (+ out-off N2 N4 1 2k)) (aref buf (- N4 1 k) 0)
             (aref out (+ out-off N2 N4 3 2k)) (aref buf (- N4 2 k) 0)))
-    
-    (print buf)
     )
-  (print `(:data ,(length data)))
   (values))

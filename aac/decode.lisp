@@ -189,8 +189,24 @@
           (loop FOR bin FROM 0 BELOW width 
                 FOR key = (+ (* g 10000000) (* win 100000) (* sfb 1000) bin) ; XXX:
             DO
-            (push `(,key ,(pop data)) new-data)))))
-    (mapcar #'second (sort (nreverse new-data) #'< :key #'first))))
+            (push `(,key ,(pop data) ,win) new-data)))))
+
+    ;; XXX: 暫定処置: 値生成時に適切な場所に埋めるようにする
+    (loop WITH prev-win = 0
+          WITH count = 0
+          WITH acc = '()
+          FOR (key val win) IN (sort new-data #'< :key #'first)
+      DO
+      (if (= prev-win win)
+          (incf count)
+        (progn (loop REPEAT (- 128 count) DO (push 0 acc))
+               (setf prev-win win)
+               (setf count 1)))
+      (push val acc)
+      FINALLY
+      (loop REPEAT (- 128 count) DO (push 0 acc))
+      (return (nreverse acc)))))
+    ;;(mapcar #'second (sort  new-data #'< :key #'first))))
 
 (defun decode-cpe (cpe &optional (filterbanks (list (make-filterbank) (make-filterbank))))
   (declare (channel-pair-element cpe))
