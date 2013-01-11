@@ -26,7 +26,7 @@
          (N (-> mdct length))
          (N2 (ash N -1))
          (N4 (ash N -2))
-         (N8 (ash N -4))
+         (N8 (ash N -3))
          (buf (make-array `(,N4 2) :initial-element 0)))
 
     ;; pre-IFFT complex multiplication 
@@ -44,6 +44,7 @@
     ;; complex IFFT, non-scaling
     (process-fft (-> mdct fft) buf nil)
 
+    #+C
     (print (cons :fft
                  (loop FOR i FROM 0 BELOW N4 COLLECT (list (aref buf i 0) (aref buf i 1)))))
     
@@ -54,6 +55,10 @@
       DO
       (setf (aref buf k 1) (+ (* tmp1 (aref sincos k 0)) (* tmp0 (aref sincos k 1)))
             (aref buf k 0) (- (* tmp0 (aref sincos k 0)) (* tmp1 (aref sincos k 1)))))
+
+    #+C
+    (print (cons :post-ifft
+                 (loop FOR i FROM 0 BELOW N4 COLLECT (list (aref buf i 0) (aref buf i 1)))))
     
     ;; reordering
     (loop FOR k FROM 0 BELOW N8 BY 2
