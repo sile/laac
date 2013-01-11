@@ -55,12 +55,13 @@
          )
 		
         (:eight-short-sequence 
-         (print `(:length ,(length data)))
          (loop FOR i FROM 0 BELOW 8 DO
            (process-mdct mdct-short (nthcdr (* i short-len) data) buf (* 2 i short-len))
            (print (list `(:loop ,i)
                         (subseq data (* i short-len) (* (1+ i) short-len))
                         (subseq buf (* 2 i short-len) (* 2 (+ i 1) short-len))))
+		   (when (>= i 3)
+			 (return))
            )
          
          (error "unsupported")

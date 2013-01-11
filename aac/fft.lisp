@@ -40,6 +40,11 @@
         (setf (aref in i 0) (aref rev i 0)
               (aref in i 1) (aref rev i 1)))
 
+      #+C
+      (print `(:bit-reversal
+               ,(loop FOR i FROM 0 BELOW length
+                      COLLECT (list (aref in i 0) (aref in i 1)))))
+
       ;; bottom base-4 round
       (loop FOR i BELOW length BY 4
         DO
@@ -70,6 +75,11 @@
                   (aref in (+ i 3) 0) e2-0
                   (aref in (+ i 3) 1) e2-1))))
 
+      #+C
+      (print `(:bottom-base-4-round
+               ,(loop FOR i FROM 0 BELOW length
+                      COLLECT (list (aref in i 0) (aref in i 1)))))
+
       ;; iterations from bottom to top
       (loop FOR i = 4 THEN (ash i 1)
             WHILE (< i length)
@@ -82,11 +92,16 @@
                 FOR km = (* k m)
                 FOR root-re = (aref roots km 0)
                 FOR root-im = (aref roots km im-off)
-                FOR z-re = (- (* (aref in (+ i j k) 0) root-re) (* (aref in (+ i j k) 0) root-im))
-                FOR z-im = (- (* (aref in (+ i j k) 0) root-im) (* (aref in (+ i j k) 1) root-re))
+                FOR z-re = (- (* (aref in (+ i j k) 0) root-re) (* (aref in (+ i j k) 1) root-im))
+                FOR z-im = (+ (* (aref in (+ i j k) 0) root-im) (* (aref in (+ i j k) 1) root-re))
             DO
             (setf (aref in (+ i j k) 0) (* (- (aref in (+ j k) 0) z-re) scale)
                   (aref in (+ i j k) 1) (* (- (aref in (+ j k) 1) z-im) scale)
                   (aref in (+ j k) 0)   (* (+ (aref in (+ j k) 0) z-re) scale)
-                  (aref in (+ j k) 0)   (* (+ (aref in (+ j k) 1) z-im) scale)))))
+                  (aref in (+ j k) 1)   (* (+ (aref in (+ j k) 1) z-im) scale)))))
+
+      #+C
+      (print `(:iterations-from-bottom-to-top
+               ,(loop FOR i FROM 0 BELOW length
+                      COLLECT (list (aref in i 0) (aref in i 1)))))
       (values))))
