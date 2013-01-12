@@ -245,15 +245,24 @@
     (setf invquant-data2 (sort-data ics2 invquant-data2))
 
     ;; filterbank
-    (process-filterbank (first filterbanks) 
-                        (window-sequence-name (-> ics1 ics-info window-sequence)) 
-                        (-> ics1 ics-info window-shape)
-                        invquant-data1)
+    (let ((out1 (process-filterbank (first filterbanks) 
+                                    (window-sequence-name (-> ics1 ics-info window-sequence)) 
+                                    (-> ics1 ics-info window-shape)
+                                    invquant-data1))
+          (out2 (process-filterbank (second filterbanks) 
+                                    (window-sequence-name (-> ics2 ics-info window-sequence)) 
+                                    (-> ics2 ics-info window-shape)
+                                    invquant-data2)))
+      ;; TODO: ltp
 
-    (process-filterbank (second filterbanks) 
-                        (window-sequence-name (-> ics2 ics-info window-sequence)) 
-                        (-> ics2 ics-info window-shape)
-                        invquant-data2)
-    
-    (values invquant-data1
-            invquant-data2)))
+      ;; independent coupling
+      ;; NOTE: 現状、cce未対応なので関係なし
+      
+      ;; gain control
+      (assert (= (-> ics1 gain-control-data-present) 0) () "unsupported: gain-control")
+      (assert (= (-> ics2 gain-control-data-present) 0) () "unsupported: gain-control")
+      
+      ;; SBR
+      ;; XXX: unsupported
+      
+      (values out1 out2))))
