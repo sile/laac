@@ -41,9 +41,11 @@
           )))))
 
 (defun test4 (aac-path &optional (limit 1))
+  (let ((fb1 (laac.aac::make-filterbank))
+        (fb2 (laac.aac::make-filterbank)))
   (test3 (lambda (list)
            (let ((cpe (car list)))
-             (print (laac.aac::decode-cpe cpe))
+             (print (laac.aac::decode-cpe cpe (list fb1 fb2)))
              ))
          aac-path
-         limit))
+         limit)))

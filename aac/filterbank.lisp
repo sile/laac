@@ -104,9 +104,31 @@
            (setf (aref overlap (+ mid short-len i)) 0))
          )
 
-        (:long-stop-sequence (error "unsupported: ~a" window-sequence-name)))
+        (:long-stop-sequence
+         ;;(print `(:overlaop ,overlap))
+         (process-mdct mdct-long data buf 0)
+         
+         ;; add second half output of previous frame to windowed output of current frame
+         ;; construct first half window using padding with 1's and 0's
+         (loop FOR i FROM 0 BELOW mid DO
+           (setf (aref out i) (aref overlap i)))
+        
+         (loop FOR i FROM 0 BELOW short-len DO
+           (setf (aref out (+ mid i)) (+ (aref overlap (+ mid i)) 
+                                         (* (aref buf (+ mid i)) (short-window-ref prev-window-shape i)))))
+         
+         (loop FOR i FROM 0 BELOW mid DO
+           (setf (aref out (+ mid short-len i)) (+ (aref overlap (+ mid short-len i))
+                                                   (aref buf (+ mid short-len i)))))
+         
+         ;; window the second half and save as overlap for next frame
+         (loop FOR i FROM 0 BELOW length DO
+           (setf (aref overlap i) (* (aref buf (+ length i)) (long-window-ref window-shape (- length 1 i)))))
+         
+         ;;(print `(:long-stop-sequence ,(length out) ,out))
+         ;;(error "stop")
+         ))
       
       (setf prev-window-shape window-shape) ; XXX; これで正しい?
       
-	  (print `(:out ,out))
-	  out)))
+      out)))
