@@ -34,7 +34,19 @@
            (trans (/ short-len 2))
            (out (make-array length :initial-element 0)))
       (ecase window-sequence-name
-        (:only-long-sequence (error "unsupported: ~a" window-sequence-name))
+        (:only-long-sequence 
+         (process-mdct mdct-long data buf 0)
+         
+         ;; add second half output of previous frame to windowed output of current frame
+         (loop FOR i FROM 0 BELOW length DO
+           (setf (aref out i) (+ (aref overlap i)
+                                 (* (aref buf i) (long-window-ref prev-window-shape i)))))
+
+         ;; window the second half and save as overlap for next frame
+         (loop FOR i FROM 0 BELOW length DO
+           (setf (aref overlap i) (* (aref buf (+ length i))
+                                     (long-window-ref window-shape (- length 1 i)))))
+         )
 
         (:long-start-sequence
          (process-mdct mdct-long data buf 0)
